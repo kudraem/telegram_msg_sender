@@ -1,0 +1,8 @@
+# Virtual environments and IDE files
+.venv
+.idea
+__pycache__
+
+# Jupyter lab files
+*.ipynb
+
