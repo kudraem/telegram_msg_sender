@@ -41,13 +41,18 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException('Connection is lost, try again later.')
 
-    def who_am_i(self):
-        url = f'{self.url}{self.token}/getMe'
+    def get_request_result(self, function, method, url, **kwargs):
         try:
-            response = self.make_request('get', url)['result']
+            response = function(method, url, **kwargs)['result']
         except KeyError:
             return TgBotApiException(
                 'Something went wrong with server\'s response.')
+        return response
+
+    def who_am_i(self):
+        url = f'{self.url}{self.token}/getMe'
+        response = self.get_request_result(self.make_request,
+                                           method='get', url=url)
         first_name = response.get('first_name')
         username = response.get('username')
         return (f'Hello. I am bot. My name is {first_name}. '
@@ -72,11 +77,9 @@ class TgBotApi(requests.Session):
     def get_updates(self, updates_amount=5):
         params = {'limit': updates_amount, 'offset': self.update_id}
         url = f'{self.url}{self.token}/getUpdates'
-        try:
-            response = self.make_request('get', url, params=params)['result']
-        except KeyError:
-            return TgBotApiException(
-                'Something went wrong with server\'s response.')
+        response = self.get_request_result(self.make_request,
+                                           method='get', url=url,
+                                           params=params)
         self.update_id = response[-1].get('update_id')
         self.check_the_user(response)
         return response
