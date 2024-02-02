@@ -41,6 +41,15 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException('Connection is lost, try again later.')
 
+    def check_the_user(self, response):
+        for message in response:
+            message_attribs = message.get('message')
+            message_text = message_attribs.get('text')
+            chat_id = message_attribs.get('chat').get('id')
+            if (message_text == '/start'
+                    and chat_id not in self.allowed_users):
+                self.allowed_users.append(chat_id)
+
     # Либо это не документировано, либо я этого не нашел:
     # Если интервал между запросами к серверу менее 5 секунд,
     # Сервер отвечает только самым первым сообщением, отправленным
@@ -57,13 +66,13 @@ class TgBotApi(requests.Session):
             return TgBotApiException(
                 'Something went wrong with server\'s response.')
         self.update_id = response[-1].get('update_id')
+        self.check_the_user(response)
         return response
 
-    def check_the_user(self, response):
-        for message in response:
-            message_attribs = message.get('message')
-            message_text = message_attribs.get('text')
-            chat_id = message_attribs.get('from').get('id')
-            if (message_text == '/start'
-                    and chat_id not in self.allowed_users):
-                self.allowed_users.append(chat_id)
+    def send_the_message(self, chat_id, text):
+        if chat_id in self.allowed_users:
+            params = {'chat_id': chat_id,
+                      'text': text}
+            url = f'{self.url}{self.token}/sendMessage'
+            response = self.make_request('post', url, params=params)
+            return response

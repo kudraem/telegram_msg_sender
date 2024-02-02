@@ -4,6 +4,7 @@ from tg_bot_api.tg_bot_api import TgBotApi, TgBotApiException
 
 URL = 'https://api.telegram.org/bot'
 TOKEN = '6929213342:AAGQHDN--h2bg7k2IT-s019317WdmICQ0D4'
+TEST_CHAT_ID = 282227741
 
 
 def test_tg_bot_api():
@@ -64,3 +65,12 @@ def test_connection():
         new.get_updates()
     assert str(err.value) == 'Connection is lost, try again later.'
     print('Tests passed. Connection exception is caught')
+
+
+def test_send_message():
+    new = TgBotApi(URL, TOKEN)
+    new.get_updates()
+    text = 'Test passed'
+    response = new.send_the_message(TEST_CHAT_ID, text)
+    assert response['ok'] is True
+    print('Message is sent, test passed')
