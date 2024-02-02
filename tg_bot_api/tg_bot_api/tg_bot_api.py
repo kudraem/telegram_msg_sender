@@ -41,6 +41,18 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException('Connection is lost, try again later.')
 
+    def who_am_i(self):
+        url = f'{self.url}{self.token}/getMe'
+        try:
+            response = self.make_request('get', url)['result']
+        except KeyError:
+            return TgBotApiException(
+                'Something went wrong with server\'s response.')
+        first_name = response.get('first_name')
+        username = response.get('username')
+        return (f'Hello. I am bot. My name is {first_name}. '
+                f'You can find me at https://t.me/{username}.')
+
     def check_the_user(self, response):
         for message in response:
             message_attribs = message.get('message')

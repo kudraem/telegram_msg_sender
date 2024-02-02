@@ -74,3 +74,11 @@ def test_send_message():
     response = new.send_the_message(TEST_CHAT_ID, text)
     assert response['ok'] is True
     print('Message is sent, test passed')
+
+
+def test_bot_introduction():
+    new = TgBotApi(URL, TOKEN)
+    response = new.who_am_i()
+    assert 'Telegram Bot API' in response
+    assert response.endswith('backend_dev_roadmap_tg_api_bot.')
+    print('Bot is recognized. Test is passed')
