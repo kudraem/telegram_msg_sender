@@ -6,3 +6,5 @@ __pycache__
 # Jupyter lab files
 *.ipynb
 
+# Pytest-cov files
+.coverage
