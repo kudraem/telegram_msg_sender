@@ -9,7 +9,9 @@ TOKEN = '6929213342:AAGQHDN--h2bg7k2IT-s019317WdmICQ0D4'
 def test_tg_bot_api():
     new = TgBotApi(URL, TOKEN)
     response = new.get_updates()
-    assert response['ok'] is True
+    assert response[0]['update_id']
+    new.check_the_user(response)
+    assert len(new.allowed_users) > 0
     print('Tests for Telegram Bot API passed')
 
 
@@ -20,22 +22,25 @@ def test_raise_http_exception():
     assert str(err.value) == ('HTTPError is occured, '
                               'and it is 404 Client Error: '
                               'Not Found for url:'
-                              ' https://api.telegram.org/bothello-world/getUpdates')
+                              ' https://api.telegram.org/'
+                              'bothello-world/getUpdates?limit=5')
     print('Test passed, HTTP error is occured')
 
 
 '''
 def test_max_redirects():
-    with pytest.raises(DummyJsonException) as err:
-        new = DummyJsonApi('https://2866-79-101-225-134.ngrok-free.app/redirect_error')
-        new.get()
+    with pytest.raises(TgBotApiException) as err:
+        url = 'https://2866-79-101-225-134.ngrok-free.app/redirect_error'
+        new = TgBotApi(url, TOKEN)
+        new.get_updates()
     assert str(err.value) == 'Sorry, too many redirects'
 
 
 def test_timeout():
-    with pytest.raises(DummyJsonException) as err:
-        new = DummyJsonApi('https://2866-79-101-225-134.ngrok-free.app/timeout_error')
-        new.get()
+    with pytest.raises(TgBotApiException) as err:
+        url = 'https://2866-79-101-225-134.ngrok-free.app/timeout_error'
+        new = TgBotApi(url, TOKEN)
+        new.get_updates()
     assert str(err.value) == 'Timeout error. Try again later.'
 '''
 

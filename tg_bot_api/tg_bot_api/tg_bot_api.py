@@ -21,10 +21,13 @@ class TgBotApi(requests.Session):
         self.headers = {'User-Agent': 'Python-Study-App/1.0.0',
                         'Content-Type': 'application/json'}
         self.timeout = 5.0
+        self.update_id = None
+        self.allowed_users = []
 
     def make_request(self, method, path, **kwargs):
         try:
-            response = self.request(method, path, **kwargs)
+            response = self.request(method, path, **kwargs,
+                                    timeout=self.timeout)
             response.raise_for_status()
             return response.json()
         except requests.JSONDecodeError:
@@ -38,9 +41,29 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException('Connection is lost, try again later.')
 
-    def get_bot_username(self):
-        return "Telegram Bot API"
+    # Либо это не документировано, либо я этого не нашел:
+    # Если интервал между запросами к серверу менее 5 секунд,
+    # Сервер отвечает только самым первым сообщением, отправленным
+    # пользователем боту. Наиболее вероятно, что это сообщение -
+    # '/start'. Это удобно для проверки, разрешил ли пользователь
+    # работу нашего бота (и отправку ему сообщений в ответ).
 
-    def get_updates(self):
+    def get_updates(self, updates_amount=5):
+        params = {'limit': updates_amount, 'offset': self.update_id}
         url = f'{self.url}{self.token}/getUpdates'
-        return self.make_request('get', url)
+        try:
+            response = self.make_request('get', url, params=params)['result']
+        except KeyError:
+            return TgBotApiException(
+                'Something went wrong with server\'s response.')
+        self.update_id = response[-1].get('update_id')
+        return response
+
+    def check_the_user(self, response):
+        for message in response:
+            message_attribs = message.get('message')
+            message_text = message_attribs.get('text')
+            chat_id = message_attribs.get('from').get('id')
+            if (message_text == '/start'
+                    and chat_id not in self.allowed_users):
+                self.allowed_users.append(chat_id)
