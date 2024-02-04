@@ -2,6 +2,7 @@
 .venv
 .idea
 __pycache__
+.env
 
 # Jupyter lab files
 *.ipynb

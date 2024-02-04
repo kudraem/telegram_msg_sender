@@ -1,7 +1,11 @@
-import requests
+import os
 
-URL = 'https://api.telegram.org/bot'
-TOKEN = '6929213342:AAGQHDN--h2bg7k2IT-s019317WdmICQ0D4'
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
+URL = os.getenv("URL")
 
 
 class TgBotApiException(Exception):
@@ -18,53 +22,53 @@ class TgBotApi(requests.Session):
         self.url = url
         self.token = token
         self.max_redirects = 5
-        self.headers = {'User-Agent': 'Python-Study-App/1.0.0',
-                        'Content-Type': 'application/json'}
+        self.headers = {
+            "User-Agent": "Python-Study-App/1.0.0",
+            "Content-Type": "application/json",
+        }
         self.timeout = 5.0
         self.update_id = None
         self.allowed_users = []
 
     def make_request(self, method, path, **kwargs):
         try:
-            response = self.request(method, path, **kwargs,
-                                    timeout=self.timeout)
+            response = self.request(method, path, **kwargs, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
         except requests.JSONDecodeError:
-            raise TgBotApiException('Incoming JSON is invalid')
+            raise TgBotApiException("Incoming JSON is invalid")
         except requests.TooManyRedirects:
-            raise TgBotApiException('Sorry, too many redirects')
+            raise TgBotApiException("Sorry, too many redirects")
         except requests.HTTPError as err:
-            raise TgBotApiException(f'HTTPError is occured, and it is {err}')
+            raise TgBotApiException(f"HTTPError is occured, and it is {err}")
         except requests.Timeout:
-            raise TgBotApiException('Timeout error. Try again later.')
+            raise TgBotApiException("Timeout error. Try again later.")
         except requests.ConnectionError:
-            raise TgBotApiException('Connection is lost, try again later.')
+            raise TgBotApiException("Connection is lost, try again later.")
 
     def get_request_result(self, function, method, url, **kwargs):
         try:
-            response = function(method, url, **kwargs)['result']
+            response = function(method, url, **kwargs)["result"]
         except KeyError:
-            return TgBotApiException(
-                'Something went wrong with server\'s response.')
+            return TgBotApiException("Something went wrong with server's response.")
         return response
 
     def who_am_i(self):
-        url = f'{self.url}{self.token}/getMe'
-        response = self.get_request_result(self.make_request,
-                                           method='get', url=url)
-        first_name = response.get('first_name')
-        username = response.get('username')
-        return (f'Hello. I am bot. My name is {first_name}. '
-                f'You can find me at https://t.me/{username}.')
+        url = f"{self.url}{self.token}/getMe"
+        response = self.get_request_result(self.make_request, method="get", url=url)
+        first_name = response.get("first_name")
+        username = response.get("username")
+        return (
+            f"Hello. I am bot. My name is {first_name}. "
+            f"You can find me at https://t.me/{username}."
+        )
 
     def check_the_user(self, response):
         for message in response:
-            message_attribs = message.get('message')
-            message_text = message_attribs.get('text')
-            chat_id = message_attribs.get('chat').get('id')
-            if (message_text == '/start'
-                    and chat_id not in self.allowed_users):
+            message_attribs = message.get("message")
+            message_text = message_attribs.get("text")
+            chat_id = message_attribs.get("chat").get("id")
+            if message_text == "/start" and chat_id not in self.allowed_users:
                 self.allowed_users.append(chat_id)
 
     # Либо это не документировано, либо я этого не нашел:
@@ -75,19 +79,18 @@ class TgBotApi(requests.Session):
     # работу нашего бота (и отправку ему сообщений в ответ).
 
     def get_updates(self, updates_amount=5):
-        params = {'limit': updates_amount, 'offset': self.update_id}
-        url = f'{self.url}{self.token}/getUpdates'
-        response = self.get_request_result(self.make_request,
-                                           method='get', url=url,
-                                           params=params)
-        self.update_id = response[-1].get('update_id')
+        params = {"limit": updates_amount, "offset": self.update_id}
+        url = f"{self.url}{self.token}/getUpdates"
+        response = self.get_request_result(
+            self.make_request, method="get", url=url, params=params
+        )
+        self.update_id = response[-1].get("update_id")
         self.check_the_user(response)
         return response
 
     def send_the_message(self, chat_id, text):
         if chat_id in self.allowed_users:
-            params = {'chat_id': chat_id,
-                      'text': text}
-            url = f'{self.url}{self.token}/sendMessage'
-            response = self.make_request('post', url, params=params)
+            params = {"chat_id": chat_id, "text": text}
+            url = f"{self.url}{self.token}/sendMessage"
+            response = self.make_request("post", url, params=params)
             return response
