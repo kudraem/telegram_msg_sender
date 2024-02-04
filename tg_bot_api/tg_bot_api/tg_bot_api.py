@@ -1,3 +1,4 @@
+import logging
 import os
 
 import requests
@@ -30,9 +31,10 @@ class TgBotApi(requests.Session):
         self.update_id = None
         self.allowed_users = []
 
-    def make_request(self, method, path, **kwargs):
+    def make_request(self, http_method, api_method, **kwargs):
+        url = f"{self.url}{self.token}/{api_method}"
         try:
-            response = self.request(method, path, **kwargs, timeout=self.timeout)
+            response = self.request(http_method, url, **kwargs, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
         except requests.JSONDecodeError:
@@ -46,16 +48,17 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException("Connection is lost, try again later.")
 
-    def get_request_result(self, function, method, url, **kwargs):
+    def get_request_result(self, http_method, api_method, **kwargs):
         try:
-            response = function(method, url, **kwargs)["result"]
+            response = self.make_request(http_method, api_method, **kwargs)["result"]
         except KeyError:
-            return TgBotApiException("Something went wrong with server's response.")
+            return TgBotApiException("Response from server is received,"
+                                     "but is does not contain result.")
         return response
 
     def who_am_i(self):
-        url = f"{self.url}{self.token}/getMe"
-        response = self.get_request_result(self.make_request, method="get", url=url)
+        api_method = 'getMe'
+        response = self.get_request_result('get', api_method)
         first_name = response.get("first_name")
         username = response.get("username")
         return (
@@ -80,10 +83,9 @@ class TgBotApi(requests.Session):
 
     def get_updates(self, updates_amount=5):
         params = {"limit": updates_amount, "offset": self.update_id}
-        url = f"{self.url}{self.token}/getUpdates"
-        response = self.get_request_result(
-            self.make_request, method="get", url=url, params=params
-        )
+        api_method = "getUpdates"
+        response = self.get_request_result("get", api_method,
+                                           params=params)
         self.update_id = response[-1].get("update_id")
         self.check_the_user(response)
         return response
@@ -91,6 +93,6 @@ class TgBotApi(requests.Session):
     def send_the_message(self, chat_id, text):
         if chat_id in self.allowed_users:
             params = {"chat_id": chat_id, "text": text}
-            url = f"{self.url}{self.token}/sendMessage"
-            response = self.make_request("post", url, params=params)
+            api_method = "sendMessage"
+            response = self.make_request("post", api_method, params=params)
             return response

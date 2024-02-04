@@ -8,6 +8,7 @@ from tg_bot_api.tg_bot_api import TgBotApi, TgBotApiException
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
+TEST_ID = os.getenv('TEST_CHAT_ID')
 
 
 def test_tg_bot_api():
