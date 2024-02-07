@@ -9,6 +9,10 @@ TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
 
 
+logging.basicConfig(format='\n%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+                    filename='TgBotApi.log', encoding='utf-8', level=logging.INFO)
+
+
 class TgBotApiException(Exception):
     def __init__(self, message):
         self.message = message
@@ -49,12 +53,20 @@ class TgBotApi(requests.Session):
             raise TgBotApiException("Connection is lost, try again later.")
 
     def get_request_result(self, http_method, api_method, **kwargs):
+        response = None
         try:
-            response = self.make_request(http_method, api_method, **kwargs)["result"]
+            response = self.make_request(http_method, api_method, **kwargs)
+            return response["result"]
         except KeyError:
-            return TgBotApiException("Response from server is received,"
-                                     "but is does not contain result.")
-        return response
+            if not response:
+                logging.exception("Response is received from server,"
+                                  "but it is empty.")
+            elif response['ok'] is True and 'result' not in response:
+                logging.exception('Response is received from server,'
+                                  'but there\'s not any result')
+            else:
+                logging.exception('Response is received from server,'
+                                  'but something is wrong with it.')
 
     def who_am_i(self):
         api_method = 'getMe'
@@ -86,8 +98,8 @@ class TgBotApi(requests.Session):
         api_method = "getUpdates"
         response = self.get_request_result("get", api_method,
                                            params=params)
-        self.update_id = response[-1].get("update_id")
-        self.check_the_user(response)
+        # self.update_id = response[-1].get("update_id")
+        # self.check_the_user(response)
         return response
 
     def send_the_message(self, chat_id, text):
