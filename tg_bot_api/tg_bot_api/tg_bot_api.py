@@ -102,12 +102,11 @@ class TgBotApi(requests.Session):
         # self.update_id = response[-1].get("update_id")
         return response
 
-    def send_the_message(self, chat_id, text):
-        if chat_id in self.allowed_users:
-            params = {"chat_id": chat_id, "text": text}
-            api_method = "sendMessage"
-            response = self.make_request("post", api_method, params=params)
-            return response
+    def send_message(self, chat_id, text):
+        params = {"chat_id": chat_id, "text": text}
+        api_method = "sendMessage"
+        response = self.make_request("post", api_method, params=params)
+        return response
 
 
 class TgBotClient(TgBotApi):
@@ -120,10 +119,10 @@ class TgBotClient(TgBotApi):
 
     def open_user_list(self):
         try:
-            with open(r".users_list", "r") as users_list:
-                for user in users_list:
+            with open(".users_list", "r") as users_list:
+                for line in users_list:
+                    user = line.strip()
                     self.allowed_users.append(int(user))
-                print(self.allowed_users)
         except IOError:
             logging.error(
                 "Try to open allowed users list file,"
@@ -163,6 +162,10 @@ class TgBotClient(TgBotApi):
         report_message = "Allowed users list updated"
         with open(r".users_list", "w") as users_list:
             for user_id in self.allowed_users:
-                users_list.write(str(user_id))
+                users_list.writelines(str(user_id) + "\n")
             if updated:
                 logging.info(report_message)
+
+    def send_the_message(self, chat_id, text):
+        if chat_id in self.allowed_users:
+            return super().send_message(chat_id, text)

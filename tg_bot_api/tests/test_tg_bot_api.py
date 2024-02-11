@@ -8,7 +8,7 @@ from tg_bot_api.tg_bot_api import TgBotApi, TgBotApiException, TgBotClient
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
-TEST_ID = os.getenv("TEST_CHAT_ID")
+TEST_ID = int(os.getenv("TEST_CHAT_ID"))
 
 
 def test_tg_bot_api():
@@ -74,8 +74,9 @@ def test_connection():
 
 
 def test_send_message():
-    new = TgBotApi(URL, TOKEN)
-    new.get_updates()
+    new = TgBotClient(URL, TOKEN)
+    response = new.get_updates()
+    new.check_the_user(response)
     text = "Test passed"
     response = new.send_the_message(TEST_ID, text)
     assert response["ok"] is True
