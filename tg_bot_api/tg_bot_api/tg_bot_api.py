@@ -65,6 +65,8 @@ class TgBotApi(requests.Session):
         except requests.ConnectionError:
             raise TgBotApiException(
                 "Connection is lost, try again later.")
+        except requests.RequestException as err:
+            raise TgBotApiException(err)
 
     def get_request_result(self, http_method, api_method, **kwargs):
         response = None
