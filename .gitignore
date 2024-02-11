@@ -9,3 +9,7 @@ __pycache__
 
 # Pytest-cov files
 .coverage
+
+# Test examples, working files and directories
+.users_list
+*.log
