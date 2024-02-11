@@ -9,8 +9,13 @@ TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
 
 
-logging.basicConfig(format='\n%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                    filename='TgBotApi.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(
+    format="\n%(asctime)s %(message)s",
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+    filename="TgBotApi.log",
+    encoding="utf-8",
+    level=logging.INFO,
+)
 
 
 class TgBotApiException(Exception):
@@ -38,19 +43,28 @@ class TgBotApi(requests.Session):
     def make_request(self, http_method, api_method, **kwargs):
         url = f"{self.url}{self.token}/{api_method}"
         try:
-            response = self.request(http_method, url, **kwargs, timeout=self.timeout)
+            response = self.request(http_method,
+                                    url, **kwargs, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
-        except requests.JSONDecodeError:
-            raise TgBotApiException("Incoming JSON is invalid")
+        except requests.JSONDecodeError as err:
+            raise TgBotApiException(
+                f"Incoming JSON is invalid from char {err.pos}")
         except requests.TooManyRedirects:
-            raise TgBotApiException("Sorry, too many redirects")
+            raise TgBotApiException(
+                f"Too much redirects. Allowed: {self.max_redirects}."
+            )
         except requests.HTTPError as err:
-            raise TgBotApiException(f"HTTPError is occured, and it is {err}")
+            raise TgBotApiException(
+                f"HTTPError is occured, and it is {err}")
         except requests.Timeout:
-            raise TgBotApiException("Timeout error. Try again later.")
+            raise TgBotApiException(
+                f"Timeout error. Request is executed over \
+                {self.timeout} seconds."
+            )
         except requests.ConnectionError:
-            raise TgBotApiException("Connection is lost, try again later.")
+            raise TgBotApiException(
+                "Connection is lost, try again later.")
 
     def get_request_result(self, http_method, api_method, **kwargs):
         response = None
@@ -59,18 +73,24 @@ class TgBotApi(requests.Session):
             return response["result"]
         except KeyError:
             if not response:
-                logging.exception("Response is received from server,"
-                                  "but it is empty.")
-            elif response['ok'] is True and 'result' not in response:
-                logging.exception('Response is received from server,'
-                                  'but there\'s not any result')
+                logging.exception(
+                    "Response is received from server, "
+                    "but it is empty."
+                )
+            elif response["ok"] is True:
+                logging.exception(
+                    "Response is received from server, "
+                    "but there's not any result"
+                )
             else:
-                logging.exception('Response is received from server,'
-                                  'but something is wrong with it.')
+                logging.exception(
+                    "Response is received from server,"
+                    "but something is wrong with it."
+                )
 
     def who_am_i(self):
-        api_method = 'getMe'
-        response = self.get_request_result('get', api_method)
+        api_method = "getMe"
+        response = self.get_request_result("get", api_method)
         first_name = response.get("first_name")
         username = response.get("username")
         return (
@@ -96,8 +116,7 @@ class TgBotApi(requests.Session):
     def get_updates(self, updates_amount=5):
         params = {"limit": updates_amount, "offset": self.update_id}
         api_method = "getUpdates"
-        response = self.get_request_result("get", api_method,
-                                           params=params)
+        response = self.get_request_result("get", api_method, params=params)
         # self.update_id = response[-1].get("update_id")
         # self.check_the_user(response)
         return response
