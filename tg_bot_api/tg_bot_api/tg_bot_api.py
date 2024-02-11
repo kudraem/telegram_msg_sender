@@ -8,10 +8,9 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
 
-
 logging.basicConfig(
-    format="\n%(asctime)s %(message)s",
-    datefmt="%m/%d/%Y %I:%M:%S %p",
+    format="%(asctime)s %(levelname)s:%(message)s\n",
+    datefmt="%d/%m/%Y %I:%M:%S %p",
     filename="TgBotApi.log",
     encoding="utf-8",
     level=logging.INFO,
@@ -38,33 +37,32 @@ class TgBotApi(requests.Session):
         }
         self.timeout = 5.0
         self.update_id = None
-        self.allowed_users = []
 
     def make_request(self, http_method, api_method, **kwargs):
         url = f"{self.url}{self.token}/{api_method}"
         try:
-            response = self.request(http_method,
-                                    url, **kwargs, timeout=self.timeout)
+            response = self.request(
+                http_method, url, **kwargs, timeout=self.timeout
+            )
             response.raise_for_status()
             return response.json()
         except requests.JSONDecodeError as err:
             raise TgBotApiException(
-                f"Incoming JSON is invalid from char {err.pos}")
+                f"Incoming JSON is invalid from char {err.pos}"
+            )
         except requests.TooManyRedirects:
             raise TgBotApiException(
                 f"Too much redirects. Allowed: {self.max_redirects}."
             )
         except requests.HTTPError as err:
-            raise TgBotApiException(
-                f"HTTPError is occured, and it is {err}")
+            raise TgBotApiException(f"HTTPError is occured, and it is {err}")
         except requests.Timeout:
             raise TgBotApiException(
                 f"Timeout error. Request is executed over \
                 {self.timeout} seconds."
             )
         except requests.ConnectionError:
-            raise TgBotApiException(
-                "Connection is lost, try again later.")
+            raise TgBotApiException("Connection is lost, try again later.")
 
     def get_request_result(self, http_method, api_method, **kwargs):
         response = None
@@ -74,8 +72,7 @@ class TgBotApi(requests.Session):
         except KeyError:
             if not response:
                 logging.exception(
-                    "Response is received from server, "
-                    "but it is empty."
+                    "Response is received from server, " "but it is empty."
                 )
             elif response["ok"] is True:
                 logging.exception(
@@ -98,27 +95,11 @@ class TgBotApi(requests.Session):
             f"You can find me at https://t.me/{username}."
         )
 
-    def check_the_user(self, response):
-        for message in response:
-            message_attribs = message.get("message")
-            message_text = message_attribs.get("text")
-            chat_id = message_attribs.get("chat").get("id")
-            if message_text == "/start" and chat_id not in self.allowed_users:
-                self.allowed_users.append(chat_id)
-
-    # Либо это не документировано, либо я этого не нашел:
-    # Если интервал между запросами к серверу менее 5 секунд,
-    # Сервер отвечает только самым первым сообщением, отправленным
-    # пользователем боту. Наиболее вероятно, что это сообщение -
-    # '/start'. Это удобно для проверки, разрешил ли пользователь
-    # работу нашего бота (и отправку ему сообщений в ответ).
-
-    def get_updates(self, updates_amount=5):
+    def get_updates(self, updates_amount=None):
         params = {"limit": updates_amount, "offset": self.update_id}
         api_method = "getUpdates"
         response = self.get_request_result("get", api_method, params=params)
         # self.update_id = response[-1].get("update_id")
-        # self.check_the_user(response)
         return response
 
     def send_the_message(self, chat_id, text):
@@ -127,3 +108,61 @@ class TgBotApi(requests.Session):
             api_method = "sendMessage"
             response = self.make_request("post", api_method, params=params)
             return response
+
+
+class TgBotClient(TgBotApi):
+    def __init__(self, url, token):
+        super().__init__(url, token)
+        self.url = url
+        self.token = token
+        self.allowed_users = []
+        self.open_user_list()
+
+    def open_user_list(self):
+        try:
+            with open(r".users_list", "r") as users_list:
+                for user in users_list:
+                    self.allowed_users.append(int(user))
+                print(self.allowed_users)
+        except IOError:
+            logging.error(
+                "Try to open allowed users list file,"
+                "but it does not exist yet."
+            )
+
+    def check_the_user(self, response):
+        updated = False
+        for message in response:
+            try:
+                message_attribs = message["message"]
+            except KeyError:
+                logging.error(
+                    f'Update #{message.get("update_id")} '
+                    f"contains no user messages but service "
+                    f"information."
+                )
+                continue
+            else:
+                message_text = message_attribs.get("text")
+                chat_attrib = message_attribs.get("chat")
+                message_author = (
+                    f"{chat_attrib.get('first_name')} "
+                    f"{chat_attrib.get('last_name')}"
+                )
+                chat_id = chat_attrib.get("id")
+                if (
+                    message_text == "/start"
+                    and chat_id not in self.allowed_users
+                ):
+                    self.allowed_users.append(chat_id)
+                    logging.info(
+                        f"{message_author} with id {chat_id} "
+                        f"added to allowed users list"
+                    )
+                    updated = True
+        report_message = "Allowed users list updated"
+        with open(r".users_list", "w") as users_list:
+            for user_id in self.allowed_users:
+                users_list.write(str(user_id))
+            if updated:
+                logging.info(report_message)

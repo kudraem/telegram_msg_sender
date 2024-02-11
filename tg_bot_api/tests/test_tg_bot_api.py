@@ -3,16 +3,16 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from tg_bot_api.tg_bot_api import TgBotApi, TgBotApiException
+from tg_bot_api.tg_bot_api import TgBotApi, TgBotApiException, TgBotClient
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
-TEST_ID = os.getenv('TEST_CHAT_ID')
+TEST_ID = os.getenv("TEST_CHAT_ID")
 
 
 def test_tg_bot_api():
-    new = TgBotApi(URL, TOKEN)
+    new = TgBotClient(URL, TOKEN)
     response = new.get_updates()
     assert response[0]["update_id"]
     new.check_the_user(response)
@@ -27,9 +27,9 @@ def test_raise_http_exception():
     assert str(err.value) == (
         "HTTPError is occured, "
         "and it is 404 Client Error: "
-        "Not Found for url:"
-        " https://api.telegram.org/"
-        "bothello-world/getUpdates?limit=5"
+        "Not Found for url: "
+        "https://api.telegram.org/"
+        "bothello-world/getUpdates"
     )
     print("Test passed, HTTP error is occured")
 
@@ -77,7 +77,7 @@ def test_send_message():
     new = TgBotApi(URL, TOKEN)
     new.get_updates()
     text = "Test passed"
-    response = new.send_the_message(TEST_CHAT_ID, text)
+    response = new.send_the_message(TEST_ID, text)
     assert response["ok"] is True
     print("Message is sent, test passed")
 
