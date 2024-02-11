@@ -172,3 +172,7 @@ class TgBotClient(TgBotApi):
     def send_the_message(self, chat_id, text):
         if chat_id in self.allowed_users:
             return super().send_message(chat_id, text)
+        else:
+            raise TgBotApiException(
+                'Sending messages to this user is not allowed.'
+            )

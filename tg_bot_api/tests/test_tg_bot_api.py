@@ -89,3 +89,13 @@ def test_bot_introduction():
     assert "Telegram Bot API" in response
     assert response.endswith("backend_dev_roadmap_tg_api_bot.")
     print("Bot is recognized. Test is passed")
+
+
+def test_restricted_sending_message():
+    with pytest.raises(TgBotApiException) as err:
+        new = TgBotClient(URL, TOKEN)
+        response = new.get_updates()
+        new.check_the_user(response)
+        new.send_the_message(12345, 'You shall not receive it.')
+    assert str(err.value) == "Sending messages to this user is not allowed."
+    print("Tests passed. Privacy policy is under guard")
