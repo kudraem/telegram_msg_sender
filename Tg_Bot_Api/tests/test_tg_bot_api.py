@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from subprocess import run
 
 import pytest
 from dotenv import load_dotenv
@@ -14,6 +15,7 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
 TEST_ID = int(os.getenv("TEST_CHAT_ID"))
+TEST_TEXT = os.getenv("TEST_TEXT")
 
 # Пример конфигурации шаблона сообщения лога:
 # Формат: время, имя уровня логирования, текст сообщения;
@@ -119,3 +121,48 @@ def test_restricted_sending_message():
         new.send_the_message(12345, "You shall not receive it.")
     assert str(err.value) == "Sending messages to this user is not allowed."
     print("Tests passed. Privacy policy is under guard")
+
+
+def test_tg_messenger_accessibility():
+    path = "../TgBotScripts"
+    command = "python3 tg_messager.py --help"
+    exit_status = os.system(f"cd {path} && {command}")
+    assert exit_status == 0
+    print("Test is passed, CLI-util is available")
+
+
+path = "../TgBotScripts"
+args = f"{TOKEN} {TEST_ID}"
+
+
+def test_tg_messager_with_text():
+    text = "abra-kadabra"
+    command = f"python3 tg_messager.py {args} -t={text}"
+    exit_status = os.system(f"cd {path} && {command}")
+    assert exit_status == 0
+    print("Test is passed, text from CLI is sent")
+
+
+def test_tg_messager_with_file():
+    with open(f"{path}/text_file", "w") as file:
+        file.write(TEST_TEXT)
+    command = f"python3 tg_messager.py {args} -f='text_file'"
+    exit_status = os.system(f"cd {path} && {command}")
+    assert exit_status == 0
+    print("Test is passed, text from file is sent")
+
+
+def test_tg_messager_text_exception():
+    os.chdir("../TgBotScripts")
+    command = f"python3 tg_messager.py {args} -f=doesnt_exist"
+    result = run(command.split(), capture_output=True, text=True)
+    assert result.stdout == 'File "doesnt_exist" does not exist.\n'
+    print("Test passed. Reading file which does not exist cause error.")
+
+
+def test_tg_messager_file_exception():
+    os.chdir("../TgBotScripts")
+    command = f"python3 tg_messager.py {args}"
+    result = run(command.split(), capture_output=True, text=True)
+    assert "Sending empty messages is not allowed." in result.stderr
+    print("Test passed. Sending empty messages is correctly forbidden.")

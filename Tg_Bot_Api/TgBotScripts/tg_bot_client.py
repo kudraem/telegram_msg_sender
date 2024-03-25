@@ -20,7 +20,7 @@ class TgBotClient(TgBotApi):
         except IOError:
             logging.error(
                 "Try to open allowed users list file,"
-                "but it does not exist yet."
+                " but it does not exist yet."
             )
 
     def check_the_user(self, response):
