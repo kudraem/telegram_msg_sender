@@ -65,7 +65,6 @@ class TgBotClient(TgBotApi):
 
     def send_the_message(self, chat_id, text):
         if chat_id in self.allowed_users:
-            print("hello")
             return super().send_message(chat_id, text)
         else:
             raise TgBotApiException(

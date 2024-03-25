@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -13,6 +14,22 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
 TEST_ID = int(os.getenv("TEST_CHAT_ID"))
+
+# Пример конфигурации шаблона сообщения лога:
+# Формат: время, имя уровня логирования, текст сообщения;
+# Время: ДД/ММ/ГГГГ ЧЧ:ММ:СС (12-часовой формат);
+# Имя лог-файла;
+# Кодировка текста;
+# Уровень логирования.
+
+logging.basicConfig(
+    filemode="w",
+    format="%(asctime)s %(levelname)s:%(message)s\n",
+    datefmt="%d/%m/%Y %I:%M:%S %p",
+    filename="TgBotApi.log",
+    encoding="utf-8",
+    level=logging.INFO,
+)
 
 
 def test_tg_bot_api():

@@ -2,14 +2,6 @@ import logging
 
 import requests
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s:%(message)s\n",
-    datefmt="%d/%m/%Y %I:%M:%S %p",
-    filename="TgBotApi.log",
-    encoding="utf-8",
-    level=logging.INFO,
-)
-
 
 class TgBotApiException(Exception):
     def __init__(self, message):
