@@ -157,7 +157,7 @@ def test_tg_messager_text_exception():
     command = f"python3 tg_messager.py {args} -f=doesnt_exist"
     result = run(command.split(), capture_output=True, text=True)
     assert 'File "doesnt_exist" does not exist.' in result.stderr
-    print("Test passed. Reading file which does not exist cause error.")
+    print("Test passed. Reading file which does not exist causes error.")
 
 
 def test_tg_messager_file_exception():

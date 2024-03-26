@@ -4,7 +4,7 @@ from tg_bot_client import TgBotApiException, TgBotClient
 
 parser = argparse.ArgumentParser(
     description="A utility for sending messages "
-    "to the Telegram user on behalf of the bot."
+                "to the Telegram user on behalf of the bot."
 )
 parser.add_argument("token", type=str, help="Access token to Telegram bot.")
 parser.add_argument(
@@ -24,27 +24,31 @@ parser.add_argument(
     default="https://api.telegram.org/bot",
     type=str,
     help="Telegram bot URL. Argument is optional, "
-    "to change default url use flags '-u' or '--url'",
+         "to change default url use flags '-u' or '--url'",
 )
 arguments = parser.parse_args()
 
 
-def send_message(url, token, chat_id, text=None, path=None):
-    client = TgBotClient(url, token)
-    message = None
+def make_message(text=None, path=None):
     if text:
-        message = arguments.text
+        return text
     if path:
         try:
             file = open(path, "r")
         except IOError:
-            raise TgBotApiException( f'File "{path}" does not exist.')
+            raise TgBotApiException(f'File "{path}" does not exist.')
         message = file.read()
         file.close()
+        return message
+
+
+def send_message(url, token, chat_id, text=None, path=None):
+    client = TgBotClient(url, token)
+    message_text = make_message(text, path)
     try:
-        client.send_the_message(int(chat_id), message)
+        client.send_the_message(int(chat_id), message_text)
     except TgBotApiException:
-        if message is None:
+        if message_text is None:
             raise TgBotApiException(
                 "Sending empty messages is not allowed. "
                 'Use "-t" or "--text" flags for sending text from stdin, '
