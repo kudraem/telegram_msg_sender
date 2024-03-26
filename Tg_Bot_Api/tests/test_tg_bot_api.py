@@ -156,7 +156,7 @@ def test_tg_messager_text_exception():
     os.chdir("../TgBotScripts")
     command = f"python3 tg_messager.py {args} -f=doesnt_exist"
     result = run(command.split(), capture_output=True, text=True)
-    assert result.stdout == 'File "doesnt_exist" does not exist.\n'
+    assert 'File "doesnt_exist" does not exist.' in result.stderr
     print("Test passed. Reading file which does not exist cause error.")
 
 
@@ -166,3 +166,11 @@ def test_tg_messager_file_exception():
     result = run(command.split(), capture_output=True, text=True)
     assert "Sending empty messages is not allowed." in result.stderr
     print("Test passed. Sending empty messages is correctly forbidden.")
+
+
+def test_tg_messager_restricted_user_exception():
+    os.chdir("../TgBotScripts")
+    command = f"python3 tg_messager.py {TOKEN} 112233 -t=text"
+    result = run(command.split(), capture_output=True, text=True)
+    assert "Sending messages to this user is forbidden." in result.stderr
+    print("Test passed. Sending people messages without permission is correctly forbidden.")

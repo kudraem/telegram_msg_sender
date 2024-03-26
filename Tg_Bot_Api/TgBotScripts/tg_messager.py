@@ -38,9 +38,9 @@ def send_message(url, token, chat_id, text=None, path=None):
         try:
             file = open(path, "r")
         except IOError:
-            print(f'File "{path}" does not exist.')
-            return
+            raise TgBotApiException( f'File "{path}" does not exist.')
         message = file.read()
+        file.close()
     try:
         client.send_the_message(int(chat_id), message)
     except TgBotApiException:
@@ -55,12 +55,13 @@ def send_message(url, token, chat_id, text=None, path=None):
             "Sending messages to this user is forbidden. "
             "Check whether the user is in list of allowed users."
         )
+    return 'Your message is successfully sent.'
 
 
-send_message(
+print(send_message(
     arguments.url,
     arguments.token,
     arguments.chat_id,
     arguments.text,
     arguments.file,
-)
+))
