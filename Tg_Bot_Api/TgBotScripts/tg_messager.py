@@ -46,7 +46,7 @@ def send_message(url, token, chat_id, text=None, path=None):
     client = TgBotClient(url, token)
     message_text = make_message(text, path)
     try:
-        client.send_the_message(int(chat_id), message_text)
+        client.send_the_message(chat_id, message_text)
     except TgBotApiException:
         if message_text is None:
             raise TgBotApiException(

@@ -14,7 +14,7 @@ from tg_bot_client import TgBotClient
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 URL = os.getenv("URL")
-TEST_ID = int(os.getenv("TEST_CHAT_ID"))
+TEST_ID = os.getenv("TEST_CHAT_ID")
 TEST_TEXT = os.getenv("TEST_TEXT")
 
 # Пример конфигурации шаблона сообщения лога:

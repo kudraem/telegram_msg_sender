@@ -14,9 +14,8 @@ class TgBotClient(TgBotApi):
     def open_user_list(self):
         try:
             with open(".users_list", "r") as users_list:
-                for line in users_list:
-                    user = line.strip()
-                    self.allowed_users.append(int(user))
+                users = users_list.read()
+                self.allowed_users = users.split('\n')
         except IOError:
             logging.error(
                 "Try to open allowed users list file,"
@@ -35,31 +34,29 @@ class TgBotClient(TgBotApi):
                     f"information."
                 )
                 continue
-            else:
-                message_text = message_attribs.get("text")
-                chat_attrib = message_attribs.get("chat")
-                message_author = (
-                    f"{chat_attrib.get('first_name')} "
-                    f"{chat_attrib.get('last_name')}"
+            message_text = message_attribs.get("text")
+            chat_attrib = message_attribs.get("chat")
+            message_author = (
+                f"{chat_attrib.get('first_name')} "
+                f"{chat_attrib.get('last_name')}"
+            )
+            chat_id = str(chat_attrib.get("id"))
+            if (
+                message_text == "/start"
+                and chat_id not in self.allowed_users
+            ):
+                self.allowed_users.append(chat_id)
+                logging.info(
+                    f"{message_author} with id {chat_id} "
+                    f"added to allowed users list"
                 )
-                chat_id = chat_attrib.get("id")
-                if (
-                    message_text == "/start"
-                    and chat_id not in self.allowed_users
-                ):
-                    self.allowed_users.append(chat_id)
-                    logging.info(
-                        f"{message_author} with id {chat_id} "
-                        f"added to allowed users list"
-                    )
-                    updated = True
+                updated = True
         self.write_users_to_file(updated)
 
     def write_users_to_file(self, update_status):
         report_message = "Allowed users list updated"
         with open(r".users_list", "w") as users_list:
-            for user_id in self.allowed_users:
-                users_list.writelines(str(user_id) + "\n")
+            users_list.write("\n".join(self.allowed_users))
             if update_status:
                 logging.info(report_message)
 
