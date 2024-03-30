@@ -62,10 +62,15 @@ def send_message(url, token, chat_id, text=None, path=None):
     return 'Your message is successfully sent.'
 
 
-print(send_message(
-    arguments.url,
-    arguments.token,
-    arguments.chat_id,
-    arguments.text,
-    arguments.file,
-))
+def main():
+    print(send_message(
+        arguments.url,
+        arguments.token,
+        arguments.chat_id,
+        arguments.text,
+        arguments.file,
+    ))
+
+
+if __name__ == '__main__':
+    main()
