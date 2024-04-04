@@ -17,6 +17,12 @@ URL = os.getenv("URL")
 TEST_ID = os.getenv("TEST_CHAT_ID")
 TEST_TEXT = os.getenv("TEST_TEXT")
 
+platform = sys.platform
+if platform == 'linux' or platform == 'linux2':
+    interpreter = 'python3'
+elif platform == 'win32':
+    interpreter = 'python'
+
 # Пример конфигурации шаблона сообщения лога:
 # Формат: время, имя уровня логирования, текст сообщения;
 # Время: ДД/ММ/ГГГГ ЧЧ:ММ:СС (12-часовой формат);
@@ -125,7 +131,7 @@ def test_restricted_sending_message():
 
 def test_tg_messenger_accessibility():
     path = "../TgBotScripts"
-    command = "python3 tg_messager.py --help"
+    command = f"{interpreter} tg_messager.py --help"
     exit_status = os.system(f"cd {path} && {command}")
     assert exit_status == 0
     print("Test is passed, CLI-util is available")
@@ -137,7 +143,7 @@ args = f"{TOKEN} {TEST_ID}"
 
 def test_tg_messager_with_text():
     text = "abra-kadabra"
-    command = f"python3 tg_messager.py {args} -t={text}"
+    command = f"{interpreter} tg_messager.py {args} -t {text}"
     exit_status = os.system(f"cd {path} && {command}")
     assert exit_status == 0
     print("Test is passed, text from CLI is sent")
@@ -146,7 +152,7 @@ def test_tg_messager_with_text():
 def test_tg_messager_with_file():
     with open(f"{path}/text_file", "w") as file:
         file.write(TEST_TEXT)
-    command = f"python3 tg_messager.py {args} -f='text_file'"
+    command = f"{interpreter} tg_messager.py {args} -f text_file"
     exit_status = os.system(f"cd {path} && {command}")
     assert exit_status == 0
     print("Test is passed, text from file is sent")
@@ -154,7 +160,7 @@ def test_tg_messager_with_file():
 
 def test_tg_messager_text_exception():
     os.chdir("../TgBotScripts")
-    command = f"python3 tg_messager.py {args} -f=doesnt_exist"
+    command = f"{interpreter} tg_messager.py {args} -f doesnt_exist"
     result = run(command.split(), capture_output=True, text=True)
     assert 'File "doesnt_exist" does not exist.' in result.stderr
     print("Test passed. Reading file which does not exist causes error.")
@@ -162,7 +168,7 @@ def test_tg_messager_text_exception():
 
 def test_tg_messager_file_exception():
     os.chdir("../TgBotScripts")
-    command = f"python3 tg_messager.py {args}"
+    command = f"{interpreter} tg_messager.py {args}"
     result = run(command.split(), capture_output=True, text=True)
     assert "Sending empty messages is not allowed." in result.stderr
     print("Test passed. Sending empty messages is correctly forbidden.")
@@ -170,7 +176,7 @@ def test_tg_messager_file_exception():
 
 def test_tg_messager_restricted_user_exception():
     os.chdir("../TgBotScripts")
-    command = f"python3 tg_messager.py {TOKEN} 112233 -t=text"
+    command = f"{interpreter} tg_messager.py {TOKEN} 112233 -t text"
     result = run(command.split(), capture_output=True, text=True)
     assert "Sending messages to this user is forbidden." in result.stderr
     print("Test passed. Sending people messages without permission is correctly forbidden.")
