@@ -1,0 +1,15 @@
+# Virtual environments and IDE files
+.venv
+.idea
+__pycache__
+.env
+
+# Jupyter lab files
+*.ipynb
+
+# Pytest-cov files
+.coverage
+
+# Test examples, working files and directories
+.users_list
+*.log
